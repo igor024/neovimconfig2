@@ -245,6 +245,13 @@ do
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
   })
+
+  -- Force .h files to be treated as C++ instead of C
+  vim.filetype.add({
+    extension = {
+      h = 'cpp',
+    },
+  })
 end
 
 -- ============================================================
@@ -576,6 +583,19 @@ do
 
   -- Shortcut for searching your Neovim configuration files
   vim.keymap.set('n', '<leader>sn', function() builtin.find_files { cwd = vim.fn.stdpath 'config' } end, { desc = '[S]earch [N]eovim files' })
+
+  --install harpoon
+  vim.pack.add {{ src = gh 'ThePrimeagen/harpoon', version = 'harpoon2' }}
+
+  local harpoon = require('harpoon')
+  harpoon:setup()
+  vim.keymap.set('n', '<leader>a', function() harpoon:list():add() end)
+  vim.keymap.set('n', '<leader>e', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+
+  vim.keymap.set('n', '<leader>1', function() harpoon:list():select(1) end)
+  vim.keymap.set('n', '<leader>2', function() harpoon:list():select(2) end)
+  vim.keymap.set('n', '<leader>3', function() harpoon:list():select(3) end)
+  vim.keymap.set('n', '<leader>4', function() harpoon:list():select(4) end)
 end
 
 -- ============================================================
@@ -678,6 +698,7 @@ do
       if client and client:supports_method('textDocument/inlayHint', event.buf) then
         map('<leader>th', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[T]oggle Inlay [H]ints')
       end
+      
     end,
   })
 
@@ -898,7 +919,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'cpp', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
