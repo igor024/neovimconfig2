@@ -88,6 +88,34 @@ P.S. You can delete this when you're done too. It's your config now! :)
 -- SECTION 1: FOUNDATION
 -- Core Neovim settings, leaders, options, basic keymaps, basic autocmds
 -- ============================================================
+-- ============================================================
+-- CLIPBOARD & REGISTER PRESERVATION
+-- ============================================================
+
+-- 'd' operations: Delete to black hole register (Normal & Visual)
+vim.keymap.set({ 'n', 'v' }, 'd', '"_d', { desc = 'Delete without yanking' })
+vim.keymap.set('n', 'dd', '"_dd', { desc = 'Delete line without yanking' })
+vim.keymap.set('n', 'D', '"_D', { desc = 'Delete to end of line without yanking' })
+
+-- 'c' operations: Change to black hole register (Normal & Visual)
+vim.keymap.set({ 'n', 'v' }, 'c', '"_c', { desc = 'Change without yanking' })
+vim.keymap.set('n', 'cc', '"_cc', { desc = 'Change line without yanking' })
+vim.keymap.set('n', 'C', '"_C', { desc = 'Change to end of line without yanking' })
+
+-- 'x' operations: Delete character to black hole in Normal mode only
+-- (Visual mode 'x' remains unmapped to preserve default copy/cut behavior)
+vim.keymap.set('n', 'x', '"_x', { desc = 'Delete character without yanking' })
+vim.keymap.set('n', 'X', '"_X', { desc = 'Delete character before cursor without yanking' })
+
+-- 'p' operation: Paste over visual selection without losing clipboard content
+vim.keymap.set('x', 'p', 'P', { desc = 'Paste without overwriting clipboard' })
+
+vim.opt.expandtab = true
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 4
+vim.opt.colorcolumn = "80"
+
 do
   -- Enable faster startup by caching compiled Lua modules
   vim.loader.enable()
@@ -180,12 +208,12 @@ do
   vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
   -- Move line up and down in Normal mode
-  vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { noremap = true, silent = true, desc = "Move line down" })
-  vim.keymap.set('n', '<A-k>', ':m .-2<CR>==', { noremap = true, silent = true, desc = "Move line up" })
+  vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { noremap = true, silent = true, desc = 'Move line down' })
+  vim.keymap.set('n', '<A-k>', ':m .-2<CR>==', { noremap = true, silent = true, desc = 'Move line up' })
 
   -- Move highlighted block up and down in Visual/Select mode
-  vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv", { noremap = true, silent = true, desc = "Move selection down" })
-  vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { noremap = true, silent = true, desc = "Move selection up" })
+  vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv", { noremap = true, silent = true, desc = 'Move selection down' })
+  vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { noremap = true, silent = true, desc = 'Move selection up' })
 
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
@@ -255,11 +283,11 @@ do
   })
 
   -- Force .h files to be treated as C++ instead of C
-  vim.filetype.add({
+  vim.filetype.add {
     extension = {
       h = 'cpp',
     },
-  })
+  }
 end
 
 -- ============================================================
@@ -351,9 +379,9 @@ do
   -- automatically detecting and setting the indentation.
   --
   -- We first install it from https://github.com/NMAC427/guess-indent.nvim
-  -- and then call its `setup()` function to start it with default settings.
-  vim.pack.add { gh 'NMAC427/guess-indent.nvim' }
-  require('guess-indent').setup {}
+  -- and then call its `setup()` function to start it with default settings. I removed because annoying
+  -- vim.pack.add { gh 'NMAC427/guess-indent.nvim' }
+  -- require('guess-indent').setup {}
 
   -- Because lua is a real programming language, you can also have some logic to your installation -
   -- like only installing a plugin if a condition is met.
@@ -593,9 +621,9 @@ do
   vim.keymap.set('n', '<leader>sn', function() builtin.find_files { cwd = vim.fn.stdpath 'config' } end, { desc = '[S]earch [N]eovim files' })
 
   --install harpoon
-  vim.pack.add {{ src = gh 'ThePrimeagen/harpoon', version = 'harpoon2' }}
+  vim.pack.add { { src = gh 'ThePrimeagen/harpoon', version = 'harpoon2' } }
 
-  local harpoon = require('harpoon')
+  local harpoon = require 'harpoon'
   harpoon:setup()
   vim.keymap.set('n', '<leader>a', function() harpoon:list():add() end)
   vim.keymap.set('n', '<leader>e', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
@@ -706,7 +734,6 @@ do
       if client and client:supports_method('textDocument/inlayHint', event.buf) then
         map('<leader>th', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[T]oggle Inlay [H]ints')
       end
-      
     end,
   })
 
@@ -716,6 +743,7 @@ do
   ---@type table<string, vim.lsp.Config>
   local servers = {
     clangd = {},
+    jdtls = {},
     -- gopls = {},
     -- pyright = {},
     -- rust_analyzer = {},
@@ -819,6 +847,7 @@ do
     },
     -- You can also specify external formatters in here.
     formatters_by_ft = {
+      -- java = { 'google-java-format'}
       -- rust = { 'rustfmt' },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
@@ -875,7 +904,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'enter',
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -927,7 +956,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'cpp', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'cpp', 'java', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
