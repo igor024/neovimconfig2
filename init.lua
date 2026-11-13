@@ -114,7 +114,7 @@ vim.opt.expandtab = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
-vim.opt.colorcolumn = "80"
+vim.opt.colorcolumn = '80'
 
 do
   -- Enable faster startup by caching compiled Lua modules
@@ -858,6 +858,9 @@ do
   }
 
   vim.keymap.set({ 'n', 'v' }, '<leader>f', function() require('conform').format { async = true } end, { desc = '[F]ormat buffer' })
+
+  -- Make `=` in Visual mode format the selection using conform (respects .clang-format via clangd)
+  vim.keymap.set('x', '=', function() require('conform').format { async = true } end, { desc = 'Format selection' })
 end
 
 -- ============================================================
@@ -974,10 +977,13 @@ do
 
     -- Check if treesitter indentation is available for this language, and if so enable it
     -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
+    -- Enable treesitter based indentation (skip C/C++ so native cindent handles unclosed braces properly)
     local has_indent_query = vim.treesitter.query.get(language, 'indents') ~= nil
+    if has_indent_query and language ~= 'c' and language ~= 'cpp' then
+      vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+    end
 
-    -- Enable treesitter based indentation
-    if has_indent_query then vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" end
+    vim.keymap.set('i', '{<CR>', '{<CR>}<Esc>O', { noremap = true, desc = 'Auto-close brace on Enter' })
   end
 
   local available_parsers = require('nvim-treesitter').get_available()
